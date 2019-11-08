@@ -21,6 +21,7 @@ import json
 import os
 import subprocess
 import sys
+import pickle
 
 
 # +
@@ -30,38 +31,105 @@ import sys
 # ワードリストをもとに各マルウェアの特徴量の抽出を行う
 # + {}
 def main():
-    allWords =[]
+    one_gramList = []
+    two_gramList = []
+    three_gramList = []
+    
+    gramLists = [one_gramList,two_gramList,three_gramList]
+    
+    allwords =[]
     parser = argparse.ArgumentParser()
     parser.add_argument('dirPath')
     malDir = '../byteFiles/'
 # 実行時は'~$assemblyToJson malwareDir'   
     args = parser.parse_args(args=[malDir])
-    dirName = 'assemblyTxt/'
-    
-    makeDir(dirName)
+    dirs = ['assemblyTxt/','wordListsPickle/']
+
+    for dirName in dirs:
+        makeDir(dirName)
     
     for dirpath,dirnames,filenames in os.walk(malDir):
         for filename in filenames:
             if(filename.endswith('.exe')):
                 assembly = reverseAssembly(malDir+filename,dirName)
-                writeJson(assembly , dirName + filename.strip('.exe') + '.json')
+                writeJson(assembly , dirs[0] + filename.strip('.exe') + '.json')
+                ret = getWords(assembly)
                 
+                for idx in range(len(gramLists)):
+                    gramLists[idx].extend(ret[idx])
+                    gramLists[idx] = getOnlyWords(gramLists[idx])
+
+    for idx in range(len(gramLists)):
+        gramLists[idx] = getOnlyWords(gramLists[idx])
+        print('{} gram : {}'.format(idx+1,len(gramLists[idx])))
+        writePickle(gramLists[idx], dirs[1] + 'gram_{}.pickle'.format(idx + 1))
+        
 #                 getAllWords(allWords,filename)
 main()
 
 
 # -
 
+def writePickle(obj,filePath):
+    print(obj)
+    try:
+        with open(filePath,'wb') as f : 
+            pickle.dump(obj,f)
+        print('writing {} success'.format(filePath))
+    except:
+        print('failed writing {}'.format(filePath))
+
+
+#引数のjson内のニーモニックのn_gram(n = 1〜3)を返す
+def getWords(assembly):
+    one_wordList = []
+    two_wordList = []
+    three_wordList = []
+    for sectionName in assembly['Section'].keys():
+        for blockName in assembly['Section'][sectionName].keys():
+            one_wordList.extend(getNgram(assembly['Section'][sectionName][blockName],1))
+            two_wordList.extend(getNgram(assembly['Section'][sectionName][blockName],2))
+            three_wordList.extend(getNgram(assembly['Section'][sectionName][blockName],3))
+    
+    
+    return one_wordList, two_wordList, three_wordList
+
+
+# 引数のニーモニックリストをn単語ごとに区切ったものを返す
+def getNgram(mnemonicList,n):
+    ngram = []
+    result = []
+    count = 0
+    for mindex in range(len(mnemonicList) - n):
+        ngramWord = mnemonicList[mindex:mindex + n]
+        ngram.append(ngramWord)
+        
+    ngram = getOnlyWords(ngram)
+    return ngram
+
+
+# 引数の二次元のリストの重複する要素の削除をする
+def getOnlyWords(targetList):
+    result = []
+    for val in targetList:
+        if val not in result:
+            result.append(val)
+
+    return result
+
+
 # objdumpで逆アセンブルを行い結果をパースし、jsonを返す
 def reverseAssembly(filePath,dirName):
     
     cmd = ['objdump','-d','--no-show-raw-insn',filePath]
-    assembly = subprocess.run(cmd,stdout = subprocess.PIPE, stderr = subprocess.PIPE)
-
+    try:
+        assembly = subprocess.run(cmd,stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+    except:
+        print('can\'t reverse assembly ')
+    
     retJson= getMalJson(filePath,assembly.stdout.decode('utf8'))
     
     return retJson
-
 
 
 # +
@@ -74,14 +142,15 @@ def getMalJson(filePath,assembly):
     mnemonics = []
     results = {}
     section = {}
-    minDicList = []
+    minDicList = {}
     block = ''
     counter = 0
     isInSectionflag = False
     isInBlockflag = False
     sectionName = ''
     
-    results['filePath'] = filePath
+    fileName = os.path.basename(filePath)
+    results['fileName'] = fileName
     
     for line in lines:
         line = line.split('#')[0].strip('\n')#コメント削除
@@ -89,7 +158,7 @@ def getMalJson(filePath,assembly):
         if not line:
             if(isInBlockflag and isInSectionflag ):
                 minDic = {block:mnemonics}
-                minDicList.append(minDic)
+                minDicList.update(minDic)
                 mnemonics = []
                 isInBlockflag = False
                 continue
@@ -107,7 +176,7 @@ def getMalJson(filePath,assembly):
                     section.update({sectionName:minDicList})
                     
                 sectionName = line.split()[1]
-                minDicList = []
+                minDicList = {}
                 isInSectionflag = True
         elif(isInBlockflag == True):
 #             ニーモニックのリストを作成
@@ -133,32 +202,10 @@ def makeDir(dirName):
             mkdirArg = ['mkdir',dirName]
             subprocess.check_call(mkdirArg)
         else:
-             print('\' {} \' already exists'.format(dirName))
+             print(' {} already exists'.format(dirName))
     except:
         sys.exit('can\'t make directory')
 
-
-def getAllWords(allWords,fileName):
-    dict = getMalDict(fileName)
-    print(dict.keys)
-
-
-# +
-
-def generateNgramCount(dict,n,allWords):
-    section = dict['Section']
-    for sectionKey in section.keys():
-        for segment in section[sectionKey]:
-            for segmentKey in segment.keys():
-                mnList = segment[segmentKey]
-                if(n == 2):
-                    ngramList = list(zip(mnList,mnList[1:]))
-                elif(n == 3):
-                    ngramList = list(zip(mnList,mnList[1:],mnList[2:]))
-                makeDictionary(ngramList)
-
-
-# -
 
 # jsonファイルを指定したファイルに保存する
 def writeJson(assemblyJson,filePath):
@@ -169,72 +216,6 @@ def writeJson(assemblyJson,filePath):
         except:
             print('can\'t output {}'.format(filePath))
 
-
-# ngramList:ngram分割された単語、タプルのリスト
-def makeDictionary(ngramList):
-    count = 0
-    allWord = list(set(ngramList))
-    for word in allWords:
-        count += ngramList.count(word)
-        print('{}:{}'.format(word,ngramList.count(word)))
-
-# +
-# def getMalDict(fileName,assembly):
-    
-#     lines = assembly.split('\n')
-    
-    
-#     writeFileName = fileName + '.json'
-#     mnemonics = []
-#     results = {}
-#     section = {}
-#     minDicList = []
-#     block = ''
-#     counter = 0
-#     flag = 0
-#     sectionName = ''
-    
-#     results['f']
-    
-#     for line in lines:
-#         if counter == 1:#ファイル名を記録
-#             results['fileName']=line.split(':')[0]
-#             counter+=1
-#             continue
-#         line = line.split('#')[0].strip('\n')#コメント削除
-#         if not line:
-#             counter+=1
-#             continue
-
-#         if(line[len(line) - 1] == ':'): #末尾が':'
-#             if len(mnemonics) > 0:
-#                 minDic = {block:mnemonics}
-#                 minDicList.append(minDic)
-#                 mnemonics = []
-#             if('>:' in line) :
-#                 block = line.strip(':')
-#                 flag = 1
-#             else: #セクションの終わりを検知
-#                 words = line.split()
-#                 if sectionName:
-#                     section.update({sectionName:minDicList})
-#                 minDicList = []
-#                 sectionName = words[1]
-#                 flag = 0
-#         elif(flag == 1):
-# #             ニーモニックのリストを作成
-#             words = line.split()
-#             if(len(words) >= 2):
-#                 mnemonics.append(words[1])
-#             if counter == len(lines) - 1: #ファイルの末尾になった場合(最終セクションの処理)gg
-#                 minDic = {block:mnemonics}
-#                 minDicList.append(minDic)
-#                 section.update({sectionName:minDicList})
-#         counter+=1
-#     results['Section']=section
-# #     qprint(results)
-#     return results
-# -
 
 
 
