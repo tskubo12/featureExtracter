@@ -22,6 +22,9 @@ import os
 import subprocess
 import sys
 import pickle
+import collections
+import numpy as np
+import pandas as pd
 
 
 # +
@@ -34,16 +37,19 @@ def main():
     one_gramList = []
     two_gramList = []
     three_gramList = []
-    
     gramLists = [one_gramList,two_gramList,three_gramList]
     
-    allwords =[]
+    one_gramTupleList , two_gramTupleList , three_gramTupleList = [],[],[]
+
+    tupleList = [one_gramTupleList,two_gramTupleList,three_gramTupleList]
+    
     parser = argparse.ArgumentParser()
     parser.add_argument('dirPath')
     malDir = '../byteFiles/'
 # 実行時は'~$assemblyToJson malwareDir'   
     args = parser.parse_args(args=[malDir])
-    dirs = ['assemblyTxt/','wordListsPickle/']
+    dirs = ['assemblyTxt/','wordListsPickle/','countingResult/',
+            'countingResult/gram_1/','countingResult/gram_2/','countingResult/gram_3/']
 
     for dirName in dirs:
         makeDir(dirName)
@@ -58,26 +64,56 @@ def main():
                 for idx in range(len(gramLists)):
                     gramLists[idx].extend(ret[idx])
                     gramLists[idx] = getOnlyWords(gramLists[idx])
-
     for idx in range(len(gramLists)):
         gramLists[idx] = getOnlyWords(gramLists[idx])
         print('{} gram : {}'.format(idx+1,len(gramLists[idx])))
         writePickle(gramLists[idx], dirs[1] + 'gram_{}.pickle'.format(idx + 1))
+        
+    for dirpath,dirnames,filenames in os.walk(dirs[0]):
+        for filename in filenames:
+            with open(dirpath + filename,'r') as f:
+                json_obj = json.load(f)
+                ngramListsRaw = getWords(json_obj)
+                for index , ngramRaw in enumerate(ngramListsRaw):
+                    print('-------{} gram--------'.format(index + 1)) 
+                    for word in gramLists[index]:
+                        count = wordCounting(word,ngramRaw)
+                        tupleList[index].append((word,count))
+                    
+                    writePickle(tupleList[index],dirs[index + 3] + filename.strip('.json') + '.pickle')
+                
+        
+
+                    
         
 #                 getAllWords(allWords,filename)
 main()
 
 
 # -
+# 引数wordがtargetWordList内にいくつ存在しているか
+def wordCounting(word,targetWordList):
+    counter = 0
+    for targetWord in targetWordList:
+        if(word == targetWord):
+            counter += 1
+    return counter
 
-def writePickle(obj,filePath):
-    print(obj)
-    try:
-        with open(filePath,'wb') as f : 
-            pickle.dump(obj,f)
-        print('writing {} success'.format(filePath))
-    except:
-        print('failed writing {}'.format(filePath))
+
+# +
+list = [[1,2],[1,2],[1,1],[1,3],[1,2],[1,1],[3,2],[2,1]]
+target = [[1,2],[1,1]]
+a = np.array(list)
+
+for row in target:
+    count = 0
+    for val in list:
+        if(row == val):
+            count += 1
+    print('{} : {}'.format(row,count))
+
+
+# -
 
 
 #引数のjson内のニーモニックのn_gram(n = 1〜3)を返す
@@ -99,12 +135,11 @@ def getWords(assembly):
 def getNgram(mnemonicList,n):
     ngram = []
     result = []
-    count = 0
-    for mindex in range(len(mnemonicList) - n):
+    for mindex in range(len(mnemonicList) - n + 1):
         ngramWord = mnemonicList[mindex:mindex + n]
         ngram.append(ngramWord)
         
-    ngram = getOnlyWords(ngram)
+#     ngram = getOnlyWords(ngram)
     return ngram
 
 
@@ -215,6 +250,15 @@ def writeJson(assemblyJson,filePath):
             print('complete : writing {}'.format(filePath))
         except:
             print('can\'t output {}'.format(filePath))
+
+
+def writePickle(obj,filePath):
+    try:
+        with open(filePath,'wb') as f : 
+            pickle.dump(obj,f)
+        print('writing {} success'.format(filePath))
+    except:
+        print('failed writing {}'.format(filePath))
 
 
 
