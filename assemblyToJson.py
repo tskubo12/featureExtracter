@@ -34,23 +34,29 @@ import pandas as pd
 # ワードリストをもとに各マルウェアの特徴量の抽出を行う
 # + {}
 def main():
-    one_gramList = []
-    two_gramList = []
-    three_gramList = []
+    
+    one_gramList,two_gramList,three_gramList= [],[],[]
     gramLists = [one_gramList,two_gramList,three_gramList]
     
     one_gramTupleList , two_gramTupleList , three_gramTupleList = [],[],[]
-
     tupleList = [one_gramTupleList,two_gramTupleList,three_gramTupleList]
     
     parser = argparse.ArgumentParser()
     parser.add_argument('dirPath')
+    
     malDir = '../byteFiles/'
-# 実行時は'~$assemblyToJson malwareDir'   
+    outPutDir = 'results/'
+
+    makeDir(outPutDir)
+    
+# 実行時は'~$assemblyToJson malwareDir' 
     args = parser.parse_args(args=[malDir])
     dirs = ['assemblyTxt/','wordListsPickle/','countingResult/',
             'countingResult/gram_1/','countingResult/gram_2/','countingResult/gram_3/']
-
+    
+    for index in range(len(dirs)):
+        dirs[index] = outPutDir + dirs[index]
+    
     for dirName in dirs:
         makeDir(dirName)
     
@@ -98,22 +104,6 @@ def wordCounting(word,targetWordList):
         if(word == targetWord):
             counter += 1
     return counter
-
-
-# +
-list = [[1,2],[1,2],[1,1],[1,3],[1,2],[1,1],[3,2],[2,1]]
-target = [[1,2],[1,1]]
-a = np.array(list)
-
-for row in target:
-    count = 0
-    for val in list:
-        if(row == val):
-            count += 1
-    print('{} : {}'.format(row,count))
-
-
-# -
 
 
 #引数のjson内のニーモニックのn_gram(n = 1〜3)を返す
@@ -259,8 +249,6 @@ def writePickle(obj,filePath):
         print('writing {} success'.format(filePath))
     except:
         print('failed writing {}'.format(filePath))
-
-
 
 
 
