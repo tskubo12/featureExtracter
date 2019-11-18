@@ -19,6 +19,7 @@ import os
 import numpy as np
 import array
 import zlib
+import
 
 from math import ceil, sqrt
 from PIL import Image
@@ -62,7 +63,6 @@ def bytes2png(f, width):
     
 
     image_name = concat_path(images_dir, f.split('.')[0] + '.png')
-    print(image_name)
 #     if os.path.isfile(image_name):
 #         print('Image already exists: {}'.format(image_name))
 #         return
@@ -88,35 +88,40 @@ def bytes2png(f, width):
         pilout.save(image_name)
 
 
-files = findByteFiles()
 
-for file in files:
-    # Nataraj et al. file size to width table 
-#     images_dir = '.\\imageData_nataraj'
-    bytes_file = concat_path(bytes_dir, file)
+# +
+def main():    
+    files = findByteFiles()
 
-    with open(bytes_file, 'rb') as f:
-        lines = f.read().splitlines()
-        
-        file_size=os.path.getsize(bytes_file)
-        print('{}: {}kB'.format(file, file_size / 1024))
-        if (file_size < 10 * 1024):
-            bytes2png(file, 32)
-        elif (file_size < 30 * 1024):
-            bytes2png(file, 64)
-        elif (file_size < 60 * 1024):
-            bytes2png(file, 128)
-        elif (file_size < 100 * 1024):
-            bytes2png(file, 256)
-        elif (file_size < 200 * 1024):
-            bytes2png(file, 384)
-        elif (file_size < 500 * 1024):
-            bytes2png(file, 512)
-        elif (file_size < 1000 * 1024):
-            bytes2png(file, 768)
-        else:
-            bytes2png(file, 1024)
+    for file in files:
+        # Nataraj et al. file size to width table 
+    #     images_dir = '.\\imageData_nataraj'
+        bytes_file = concat_path(bytes_dir, file)
 
+        with open(bytes_file, 'rb') as f:
+            lines = f.read().splitlines()
+
+            file_size=os.path.getsize(bytes_file)
+            print('{}: {}kB'.format(file, file_size / 1024))
+            if (file_size < 10 * 1024):
+                bytes2png(file, 32)
+            elif (file_size < 30 * 1024):
+                bytes2png(file, 64)
+            elif (file_size < 60 * 1024):
+                bytes2png(file, 128)
+            elif (file_size < 100 * 1024):
+                bytes2png(file, 256)
+            elif (file_size < 200 * 1024):
+                bytes2png(file, 384)
+            elif (file_size < 500 * 1024):
+                bytes2png(file, 512)
+            elif (file_size < 1000 * 1024):
+                bytes2png(file, 768)
+            else:
+                bytes2png(file, 1024)
+
+main()
 # -
+
 
 

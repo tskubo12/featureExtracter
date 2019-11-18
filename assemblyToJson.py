@@ -32,70 +32,6 @@ import pandas as pd
 # マルウェア全ファイルの逆アセンブル結果を「assemblyTxt」に保存
 # 「assemblyTxt」内のファイルをすべてパースしワードリストを作成する
 # ワードリストをもとに各マルウェアの特徴量の抽出を行う
-# + {}
-def main():
-    
-    one_gramList,two_gramList,three_gramList= [],[],[]
-    gramLists = [one_gramList,two_gramList,three_gramList]
-    
-    one_gramTupleList , two_gramTupleList , three_gramTupleList = [],[],[]
-    tupleList = [one_gramTupleList,two_gramTupleList,three_gramTupleList]
-    
-    parser = argparse.ArgumentParser()
-    parser.add_argument('dirPath')
-    
-    malDir = '../byteFiles/'
-    outPutDir = 'results/'
-
-    makeDir(outPutDir)
-    
-# 実行時は'~$assemblyToJson malwareDir' 
-    args = parser.parse_args(args=[malDir])
-    dirs = ['assemblyTxt/','wordListsPickle/','countingResult/',
-            'countingResult/gram_1/','countingResult/gram_2/','countingResult/gram_3/']
-    
-    for index in range(len(dirs)):
-        dirs[index] = outPutDir + dirs[index]
-    
-    for dirName in dirs:
-        makeDir(dirName)
-    
-    for dirpath,dirnames,filenames in os.walk(malDir):
-        for filename in filenames:
-            if(filename.endswith('.exe')):
-                assembly = reverseAssembly(malDir+filename,dirName)
-                writeJson(assembly , dirs[0] + filename.strip('.exe') + '.json')
-                ret = getWords(assembly)
-                
-                for idx in range(len(gramLists)):
-                    gramLists[idx].extend(ret[idx])
-                    gramLists[idx] = getOnlyWords(gramLists[idx])
-    for idx in range(len(gramLists)):
-        gramLists[idx] = getOnlyWords(gramLists[idx])
-        print('{} gram : {}'.format(idx+1,len(gramLists[idx])))
-        writePickle(gramLists[idx], dirs[1] + 'gram_{}.pickle'.format(idx + 1))
-        
-    for dirpath,dirnames,filenames in os.walk(dirs[0]):
-        for filename in filenames:
-            with open(dirpath + filename,'r') as f:
-                json_obj = json.load(f)
-                ngramListsRaw = getWords(json_obj)
-                for index , ngramRaw in enumerate(ngramListsRaw):
-                    print('-------{} gram--------'.format(index + 1)) 
-                    for word in gramLists[index]:
-                        count = wordCounting(word,ngramRaw)
-                        tupleList[index].append((word,count))
-                    
-                    writePickle(tupleList[index],dirs[index + 3] + filename.strip('.json') + '.pickle')
-                
-        
-
-                    
-        
-#                 getAllWords(allWords,filename)
-main()
-
-
 # -
 # 引数wordがtargetWordList内にいくつ存在しているか
 def wordCounting(word,targetWordList):
@@ -251,5 +187,68 @@ def writePickle(obj,filePath):
         print('failed writing {}'.format(filePath))
 
 
+# +
+def main():
+    
+    one_gramList,two_gramList,three_gramList= [],[],[]
+    gramLists = [one_gramList,two_gramList,three_gramList]
+    
+    one_gramTupleList , two_gramTupleList , three_gramTupleList = [],[],[]
+    tupleList = [one_gramTupleList,two_gramTupleList,three_gramTupleList]
+    
+    parser = argparse.ArgumentParser()
+    parser.add_argument('dirPath')
+    
+    malDir = 'byteFiles/'
+    outPutDir = 'results/'
+
+    makeDir(outPutDir)
+    
+# 実行時は'~$assemblyToJson malwareDir' 
+    args = parser.parse_args(args=[malDir])
+    dirs = ['assemblyTxt/','wordListsPickle/','countingResult/',
+            'countingResult/gram_1/','countingResult/gram_2/','countingResult/gram_3/']
+    
+    for index in range(len(dirs)):
+        dirs[index] = outPutDir + dirs[index]
+    
+    for dirName in dirs:
+        makeDir(dirName)
+    
+    for dirpath,dirnames,filenames in os.walk(malDir):
+        for filename in filenames:
+            if(filename.endswith('.exe')):
+                assembly = reverseAssembly(malDir+filename,dirName)
+                writeJson(assembly , dirs[0] + filename.strip('.exe') + '.json')
+                ret = getWords(assembly)
+                
+                for idx in range(len(gramLists)):
+                    gramLists[idx].extend(ret[idx])
+                    gramLists[idx] = getOnlyWords(gramLists[idx])
+    for idx in range(len(gramLists)):
+        gramLists[idx] = getOnlyWords(gramLists[idx])
+        print('{} gram list : {}'.format(idx+1,len(gramLists[idx])))
+        writePickle(gramLists[idx], dirs[1] + 'gram_{}.pickle'.format(idx + 1))
+        
+    for dirpath,dirnames,filenames in os.walk(dirs[0]):
+        for filename in filenames:
+            with open(dirpath + filename,'r') as f:
+                json_obj = json.load(f)
+                ngramListsRaw = getWords(json_obj)
+                for index , ngramRaw in enumerate(ngramListsRaw):
+                    print('-------{} gram--------'.format(index + 1)) 
+                    for word in gramLists[index]:
+                        count = wordCounting(word,ngramRaw)
+                        tupleList[index].append((word,count))
+                    
+                    writePickle(tupleList[index],dirs[index + 3] + filename.strip('.json') + '.pickle')
+                
+        
+
+                    
+        
+#                 getAllWords(allWords,filename)
+main()
+# -
 
 
