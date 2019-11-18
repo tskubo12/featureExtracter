@@ -9,22 +9,19 @@
 #       format_version: '1.4'
 #       jupytext_version: 1.2.4
 #   kernelspec:
-#     display_name: Python 3
+#     display_name: syusiML
 #     language: python
-#     name: python3
+#     name: syusiml
 # ---
 
 # アセンブリの記されたテキストファイルからニーモニックのみを抽出しjsonファイルを作成する
 import argparse
-import unicodedata
 import json
 import os
 import subprocess
 import sys
 import pickle
 import collections
-import numpy as np
-import pandas as pd
 
 
 # +
@@ -249,6 +246,3 @@ def main():
         
 #                 getAllWords(allWords,filename)
 main()
-# -
-
-
