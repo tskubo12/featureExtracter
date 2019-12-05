@@ -38,7 +38,7 @@ def getNgram(mnemonicList,n):
     for mindex in range(len(mnemonicList) - n + 1):
         ngramWord = mnemonicList[mindex:mindex + n]
         ngram.append(ngramWord)
-        
+
 #     ngram = getOnlyWords(ngram)
     return ngram
 
@@ -55,7 +55,7 @@ def getOnlyWords(targetList):
 
 # objdumpで逆アセンブルを行い結果をパースし、jsonを返す
 def reverseAssembly(filePath):
-    
+
     cmd = ['objdump','--disassemble','--no-show-raw-insn',filePath]
     try:
         assembly = subprocess.run(cmd,stdout = subprocess.PIPE, stderr = subprocess.PIPE)
@@ -63,9 +63,9 @@ def reverseAssembly(filePath):
 
     except:
         print('can\'t reverse assembly ')
-    
+
     retJson= getMalJson(filePath,assembly.stdout.decode('utf8'))
-    
+
     return retJson
 
 
@@ -111,36 +111,36 @@ def writeJson(assemblyJson,filePath):
 # +
 #逆アセンブルの結果をパースしニーモニックをjsonとして返す
 def getMalJson(filePath,assembly):
-    
+
     lines = assembly.split('\n')
     lines.append(' ')
-    
+
     sectionName= ''
     mnemonics = []
     results = {}
     section = {}
     sectionName = ''
     sectionNumber = 0
-    
+
     fileName = os.path.basename(filePath)
     results['FileName'] = fileName
     results['Filetype '] = checkFileType(filePath)
-    
+
     print('parsing  ')
-    
+
     for line in lines:
         if not line:
             continue
         line = line.split('#')[0].strip('\n')#コメント削除
-        
-        
+
+
         if(re.findall('.*:.*file format',line)):
             continue
-    
+
         if (re.findall('Disassembly.*:', line)):
             continue
-        
-        
+
+
         if(re.findall('<.*>',line)):
             sectionName = re.findall('<.*>',line)
             if(len(mnemonics) >= 1):
@@ -148,15 +148,15 @@ def getMalJson(filePath,assembly):
                 sectionNumber += 1
                 mnemonics = []
             continue
-        
+
         words = line.split()
         if(len(words) >=2):
             mnemonics.append(words[1])
 
     section.update({sectionName[0] + '_{}'.format(sectionNumber):mnemonics})
-            
+
     results['mnemonics']=section
-    
+
     return results
 
 
@@ -166,7 +166,7 @@ def getMalJson(filePath,assembly):
 def writePickle(obj,filePath):
     fileName = os.path.basename(filePath)
     try:
-        with open(filePath,'wb') as f : 
+        with open(filePath,'wb') as f :
             pickle.dump(obj,f)
         print('writing {} success'.format(fileName))
     except:
@@ -177,24 +177,23 @@ def main():
 
 #     parser = argparse.ArgumentParser()
 #     parser.add_argument('dirPath')
-    
+
 #     malDir = 'byteFiles/'
     outPutDir = 'results/'
 
     makeDir(outPutDir)
     errorHashList = []
-    
-    
-# 実行時は'~$assemblyToJson malwareDir' 
+
+
+# 実行時は'~$assemblyToJson malwareDir'
 #     args = parser.parse_args(args=[malDir])
     malDir = sys.argv[1]
-    malDir = '/media/sf_VirtualBox_share/malware_samples/samples/samples/ransomware/'
-    
+
     dir = 'assemblyTxt'
     jsonDir = os.path.join(outPutDir,dir)
     makeDir(jsonDir)
-    
-    
+
+
     for dirpath,dirnames,filenames in os.walk(malDir):
         fileNamesLen = len(filenames)
         idx = 1
@@ -207,10 +206,9 @@ def main():
                 print('can not complete process')
                 errorHashList.append(filename)
             idx += 1
-    
-    print(errorHashList)
-    
+
     with open(os.path.join(outPutDir,'errorList.csv') , 'w') as f:
         writer = csv.writer(f)
         writer.writerow(errorHashList)
+
 main()
