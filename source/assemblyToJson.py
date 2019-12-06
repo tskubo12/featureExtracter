@@ -31,28 +31,6 @@ import re
 # 「assemblyTxt」内のファイルをすべてパースしワードリストを作成する
 # ワードリストをもとに各マルウェアの特徴量の抽出を行う
 # -
-# 引数のニーモニックリストをn単語ごとに区切ったものを返す
-def getNgram(mnemonicList,n):
-    ngram = []
-    result = []
-    for mindex in range(len(mnemonicList) - n + 1):
-        ngramWord = mnemonicList[mindex:mindex + n]
-        ngram.append(ngramWord)
-
-#     ngram = getOnlyWords(ngram)
-    return ngram
-
-
-# 引数の二次元のリストの重複する要素の削除をする
-def getOnlyWords(targetList):
-    result = []
-    for val in targetList:
-        if val not in result:
-            result.append(val)
-
-    return result
-
-
 # objdumpで逆アセンブルを行い結果をパースし、jsonを返す
 def reverseAssembly(filePath):
 
@@ -174,19 +152,12 @@ def writePickle(obj,filePath):
 
 
 def main():
-
-#     parser = argparse.ArgumentParser()
-#     parser.add_argument('dirPath')
-
-#     malDir = 'byteFiles/'
     outPutDir = 'results/'
 
     makeDir(outPutDir)
     errorHashList = []
 
 
-# 実行時は'~$assemblyToJson malwareDir'
-#     args = parser.parse_args(args=[malDir])
     malDir = sys.argv[1]
 
     dir = 'assemblyTxt'
