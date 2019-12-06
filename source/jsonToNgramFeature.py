@@ -47,40 +47,6 @@ def writePickle(obj,filePath):
         print('failed writing {}'.format(fileName))
 
 
-targetDirPath = '/media/sf_VirtualBox_share/results_featureExtracter/assemblyTxt/'
-for (dirpath,dirnames,filenames) in os.walk(targetDirPath):
-    idx  = 1
-    fileCounter = len(filenames)
-    allWordDict = []
-    for fileName in filenames:
-        print('process : {0}/{1}'.format(idx,fileCounter))
-        
-        mnemonicSections = fileLoader(os.path.join(dirpath,fileName)) 
-        
-        allWordDict.extend(getUniqueWordListFromSections(mnemonicSections))
-        idx += 1
-    allWordDict = getOnlyWords(allWordDict)
-    print(len(allWordDict))
-    print('Finish Process')
-    writePicke(allWordDict,'../allWordDict.pickle')
-
-targetFilePath = '/media/sf_VirtualBox_share/results_featureExtracter/assemblyTxt/872b88f03eb99d1d3c78191d4d4338b735cdd59e69943507dbdf9c3e9236ce99.json'
-mnemonicSections = fileLoader(targetFilePath)
-ret = getUniqueWordListFromSections(mnemonicSections)
-print(len(ret))
-
-# +
-targetFilePath = '/media/sf_VirtualBox_share/results_featureExtracter/assemblyTxt/872b88f03eb99d1d3c78191d4d4338b735cdd59e69943507dbdf9c3e9236ce99.json'
-targetFilePath2 = '/media/sf_VirtualBox_share/results_featureExtracter/assemblyTxt/b05e3252b76344ab90fc1230bfa8c6b758ac0c6b8c03357d8e573e4eb8bd1b5a.json'
-ret = []
-for i in [targetFilePath,targetFilePath2]:
-    mnemonicSections = fileLoader(targetFilePath)
-    ret.extend(getUniqueWordListFromSections(mnemonicSections))
-    print(len(getOnlyWords(ret)))
-
-
-# -
-
 def getUniqueWordListFromSections(mnemonicSections):
     mnemonicSectionsNames = mnemonicSections.keys()
     uniqueWordList = []
@@ -139,35 +105,58 @@ def isPe32(fileTypeStr):
         return False
 
 
-# %reset
-
+# +
 def main():
-##############ここらへんから怪しい###############
-            for idx in range(len(gramLists)):
-                gramLists[idx].extend(ret[idx])
-                gramLists[idx] = getOnlyWords(gramLists[idx])
-                print('gram {}'.format(idx))
-    for idx in range(len(gramLists)):
-        gramLists[idx] = getOnlyWords(gramLists[idx])
-        print('{} gram list : {}'.format(idx+1,len(gramLists[idx])))
-        writePickle(gramLists[idx], dirs[1] + 'gram_{}.pickle'.format(idx + 1))
+    targetDirPath = '/media/sf_VirtualBox_share/results_featureExtracter/assemblyTxt/'
+    for (dirpath,dirnames,filenames) in os.walk(targetDirPath):
+        idx  = 1
+        fileCounter = len(filenames)
+        allWordDict = []
+        for fileName in filenames:
+            print('process : {0}/{1}'.format(idx,fileCounter))
+
+            mnemonicSections = fileLoader(os.path.join(dirpath,fileName)) 
+
+            allWordDict.extend(getUniqueWordListFromSections(mnemonicSections))
+            idx += 1
+        allWordDict = getOnlyWords(allWordDict)
+        print(len(allWordDict))
+        print('Finish Process')
+        writePicke(allWordDict,'../allWordDict.pickle')
+
+main()
+# -
+
+
+
+# +
+# def main():
+# ##############ここらへんから怪しい###############
+#             for idx in range(len(gramLists)):
+#                 gramLists[idx].extend(ret[idx])
+#                 gramLists[idx] = getOnlyWords(gramLists[idx])
+#                 print('gram {}'.format(idx))
+#     for idx in range(len(gramLists)):
+#         gramLists[idx] = getOnlyWords(gramLists[idx])
+#         print('{} gram list : {}'.format(idx+1,len(gramLists[idx])))
+#         writePickle(gramLists[idx], dirs[1] + 'gram_{}.pickle'.format(idx + 1))
         
-    for dirpath,dirnames,filenames in os.walk(dirs[0]):
-        for filename in filenames:
-            with open(dirpath + filename,'r') as f:
-                json_obj = json.load(f)
-                ngramListsRaw = getWords(json_obj)
-                for index , ngramRaw in enumerate(ngramListsRaw):
-                    print('-------{} gram--------'.format(index + 1)) 
-                    for word in gramLists[index]:
-                        count = wordCounting(word,ngramRaw)
-                        tupleList[index].append((word,count))
+#     for dirpath,dirnames,filenames in os.walk(dirs[0]):
+#         for filename in filenames:
+#             with open(dirpath + filename,'r') as f:
+#                 json_obj = json.load(f)
+#                 ngramListsRaw = getWords(json_obj)
+#                 for index , ngramRaw in enumerate(ngramListsRaw):
+#                     print('-------{} gram--------'.format(index + 1)) 
+#                     for word in gramLists[index]:
+#                         count = wordCounting(word,ngramRaw)
+#                         tupleList[index].append((word,count))
                     
-                    writePickle(tupleList[index],dirs[index + 3] + os.path.splitext(filename)[0] + '.pickle')
+#                     writePickle(tupleList[index],dirs[index + 3] + os.path.splitext(filename)[0] + '.pickle')
 
 
-            print('getWords ....')
-            ret = getWords(assembly)
-            print('complete : getwords')
+#             print('getWords ....')
+#             ret = getWords(assembly)
+#             print('complete : getwords')
             
-            print('extendWording, getOnlyWords ..............')
+#             print('extendWording, getOnlyWords ..............')
