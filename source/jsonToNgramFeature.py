@@ -16,14 +16,20 @@
 import json
 import os
 import re
+import pickle
 
 
 # 引数の二次元のリストの重複する要素の削除をする
 def getOnlyWords(targetList):
     result = []
+    index = 1
+    listLength = len(targetList)
     for val in targetList:
         if val not in result:
             result.append(val)
+        if((index%10000) == 0):
+            print('{0}/{1}'.format(index,listLength))
+        index +=1
 
     return result
 
@@ -39,12 +45,12 @@ def wordCounting(word,targetWordList):
 
 def writePickle(obj,filePath):
     fileName = os.path.basename(filePath)
-    try:
-        with open(filePath,'wb') as f : 
-            pickle.dump(obj,f)
-        print('writing {} success'.format(fileName))
-    except:
-        print('failed writing {}'.format(fileName))
+#     try:
+    with open(filePath,'wb') as f : 
+        pickle.dump(obj,f)
+    print('writing {} success'.format(fileName))
+#     except:
+#         print('failed writing {}'.format(fileName))
 
 
 def getUniqueWordListFromSections(mnemonicSections):
@@ -105,29 +111,25 @@ def isPe32(fileTypeStr):
         return False
 
 
-# +
-def main():
-    targetDirPath = '/media/sf_VirtualBox_share/results_featureExtracter/assemblyTxt/'
-    for (dirpath,dirnames,filenames) in os.walk(targetDirPath):
-        idx  = 1
-        fileCounter = len(filenames)
-        allWordDict = []
-        for fileName in filenames:
-            print('process : {0}/{1}'.format(idx,fileCounter))
+targetDirPath=r'C:\Users\HIROKI\Downloads\results_20191205\results\assemblyTxt'
+for (dirpath,dirnames,filenames) in os.walk(targetDirPath):
+    idx  = 1
+    fileCounter = len(filenames)
+    allWordDict = []
+    for fileName in filenames:
+        print('process : {0}/{1}'.format(idx,fileCounter))
 
-            mnemonicSections = fileLoader(os.path.join(dirpath,fileName)) 
+        mnemonicSections = fileLoader(os.path.join(dirpath,fileName)) 
 
-            allWordDict.extend(getUniqueWordListFromSections(mnemonicSections))
-            idx += 1
-        allWordDict = getOnlyWords(allWordDict)
-        print(len(allWordDict))
-        print('Finish Process')
-        writePicke(allWordDict,'../allWordDict.pickle')
+        allWordDict.extend(getUniqueWordListFromSections(mnemonicSections))
+        idx += 1
 
-main()
-# -
-
-
+        
+    writePickle(allWordDict,r'..\allWordDict_before.pickle')
+    allWordDict = getOnlyWords(allWordDict)
+    print(len(allWordDict))
+    print('Finish Process')
+    writePickle(allWordDict,r'..\allWordDict.pickle')
 
 # +
 # def main():
