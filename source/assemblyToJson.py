@@ -6,12 +6,12 @@
 #     text_representation:
 #       extension: .py
 #       format_name: light
-#       format_version: '1.4'
-#       jupytext_version: 1.2.4
+#       format_version: '1.5'
+#       jupytext_version: 1.3.0
 #   kernelspec:
-#     display_name: syusiML
+#     display_name: Python 3
 #     language: python
-#     name: syusiml
+#     name: python3
 # ---
 
 # アセンブリの記されたテキストファイルからニーモニックのみを抽出しjsonファイルを作成する
