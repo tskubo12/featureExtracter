@@ -42,6 +42,8 @@ for (dirpath,dirnames,filenames) in os.walk(targetDirPath):
     idx  = 1
     fileCounter = len(filenames)
     allWordDict = []
+    getf.writePickle(allWordDict,r'..\allWordDict_unigram_before.pickle')
+
     for fileName in filenames:
         print('process : {0}/{1}'.format(idx,fileCounter))
 

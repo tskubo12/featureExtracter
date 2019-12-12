@@ -57,9 +57,25 @@ def getWordAndCountList(allWordDict,divided):
 
 targetDirPath=r'C:\Users\HIROKI\Downloads\results_20191205\results\assemblyTxt'
 resultDir = r'..\featureFromNgram'
-with open(r'..\allWordDict.pickle', mode='rb') as f:
+with open(r'../allWordList_static.pickle', mode='rb') as f:
     allWordDict = pickle.load(f)
-allWordDict = createNewWordList(allWordDict)
+
+wordAndCountList = {}
+for (dirpath,dirnames,fileNames) in os.walk(targetDirPath):
+    idx  = 1
+    count = 0
+    fileCounter = len(fileNames)
+    for idx ,fileName in enumerate(fileNames):
+        md5 = os.path.splitext(os.path.basename(fileName))[0]
+        print('{0}/{1}'.format(idx+1,fileCounter))
+        mnemonicSections = getf.fileLoader(os.path.join(dirpath,fileName))
+        wordAndCountList = createCountingWordDict(allWordDict,mnemonicSections)
+        if(len(wordAndCountList) > 0):
+            count += 1
+            print(wordAndCountList.values())
+            print(wordAndCountList.keys())
+            getf.writePickle(wordAndCountList,os.path.join('../wordAndCountPickle_static',md5 +'.pickle'))
+    print(count)
 
 
 def getMatchIndexFromTupleList(word,tupleList):
@@ -69,51 +85,27 @@ def getMatchIndexFromTupleList(word,tupleList):
     return 0
 
 
-# tupleList = [[word1 , count1],[word2 , count2]]
-# word = [mnemonicA , mnemonicB]
+# wordAndCountList = { word : count , word2 : count2}
 def createCountingWordDict(allWordDict,mnemonicSections):
-    wordAndCountList = []
+    wordAndCountList = OrderedDict()
     flag = 0
-    print('test1')
     for sectionName in mnemonicSections.keys():
         if(getf.isSectionTextOrItext(sectionName)):
-            print('test2')
-            ngramDivided = getf.getBigramDivide(mnemonicSections[sectionName])
-            print('test3')
-            if(flag == 0):
-                wordAndCountList = getWordAndCountList(allWordDict,ngramDivided)
-                print(len(wordAndCountList))
-            else:
-                wordAndCountList = addCount(wordAndCountList,getWordAndCountList(allWordDict,ngramDivided))
-                print(len(wordAndCountList))
-            flag += 1
+            mnemonics = mnemonicSections[sectionName]
+            for dictWord in allWordDict:
+                count = mnemonics.count(dictWord)
+                if(dictWord in wordAndCountList):
+                    wordAndCountList[dictWord] = wordAndCountList[dictWord] + count
+                else:
+                    wordAndCountList[dictWord] = count
+#             if(flag == 0):
+#                 wordAndCountList = getWordAndCountList(allWordDict,ngramDivided)
+#                 print(len(wordAndCountList))
+#             else:
+#                 wordAndCountList = addCount(wordAndCountList,getWordAndCountList(allWordDict,ngramDivided))
+#                 print(len(wordAndCountList))
+#             flag += 1
 
     return wordAndCountList
 
 
-for (dirpath,dirnames,fileNames) in os.walk(targetDirPath):
-    idx  = 1
-    fileCounter = len(fileNames)
-    for fileName in fileNames:
-        print(fileName)
-        mnemonicSections = getf.fileLoader(os.path.join(dirpath,fileName))
-        wordAndCountList = createCountingWordDict(allWordDict,mnemonicSections)
-        print(len(wordAndCountList))
-
-# +
-# testMne = ['a','b','c','a','b','a','c','a','c','a','b','c','a','b','c']
-# testMne2 = ['a','b','a','b','a','b','a','b','a','b']
-# testAllword = [['a', 'b'], ['b', 'c'], ['c', 'a'],['b','a']]
-# testDivided = getf.getBigramDivide(testMne)
-# testDivided2 = getf.getBigramDivide(testMne2)
-# print(testDivided)
-# print(testDivided2)
-
-# +
-# tupleList = []
-# tupleList2 = []
-# tupleList = getWordAndCountList(testAllword,testDivided)
-# tupleList2 =  getWordAndCountList(testAllword,testDivided2)
-# print(tupleList)
-# print(tupleList2)
-# print(addCount(tupleList,tupleList2))
